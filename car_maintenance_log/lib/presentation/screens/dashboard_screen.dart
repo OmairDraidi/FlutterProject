@@ -11,6 +11,7 @@ import 'package:car_maintenance_log/presentation/screens/add_edit_vehicle_screen
 import 'package:car_maintenance_log/presentation/screens/reminders_screen.dart';
 import 'package:car_maintenance_log/presentation/screens/timeline_screen.dart';
 import 'package:car_maintenance_log/presentation/screens/analytics_screen.dart';
+import 'package:car_maintenance_log/presentation/providers/smart/smart_prediction_providers.dart';
 
 /// Dashboard screen - main overview of vehicle maintenance
 class DashboardScreen extends ConsumerWidget {
@@ -197,7 +198,131 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: AppConstants.spacing16),
+        const SizedBox(height: AppConstants.spacing24),
+
+        // Smart Insights Section
+        Text(
+          'Smart Insights',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppConstants.spacing12),
+        Consumer(
+          builder: (context, ref, child) {
+            final predictionAsync = ref.watch(nextPredictedMaintenanceProvider);
+
+            return predictionAsync.when(
+              data: (prediction) {
+                final colorScheme = Theme.of(context).colorScheme;
+                final textTheme = Theme.of(context).textTheme;
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.auto_awesome,
+                          color: colorScheme.primary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              prediction == null
+                                  ? 'No Smart Insights Yet'
+                                  : 'Next Suggested Maintenance',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            if (prediction != null) ...[
+                              Text(
+                                prediction.maintenanceType,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (prediction.estimatedNextMileage != null)
+                                Text(
+                                  'At ~${prediction.estimatedNextMileage!.round()} km',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              if (prediction.explanation != null) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  prediction.explanation!,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ] else ...[
+                              Text(
+                                'Add more maintenance logs to enable smart insights.',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              loading: () => Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
+        ),
+        const SizedBox(height: AppConstants.spacing24),
 
         // Summary Cards with real data
         Consumer(
